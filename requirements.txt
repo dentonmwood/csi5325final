@@ -1,7 +1,9 @@
-numpy
+# The Keras LSTM library won't work with the latest version of NumPy
+numpy == 1.19.5
 scipy
 sklearn
 matplotlib
 pandas
 tensorflow
 sphinx
+keras
