@@ -1,0 +1,48 @@
+\documentclass[a4paper]{article}
+\usepackage[letterpaper, margin=1in]{geometry} % page format
+\usepackage{listings} % this package is for including code
+\usepackage{graphicx} % this package is for including figures
+\usepackage{amsmath}  % this package is for math and matrices
+\usepackage{amsfonts} % this package is for math fonts
+\usepackage{tikz} % for drawings
+\usepackage{hyperref} % for urls
+
+\title{CSI 5325 Project Final Report}
+\author{Denton Wood}
+\date{4/24/2021}
+
+\begin{document}
+\lstset{language=Python}
+
+\maketitle
+
+\section{Introduction}
+
+Location-based online services have become an increasing part of our lives in the advent of smartphones. The initial development of these services centered around navigation and were designed to provide real-time directions to the user from point A to point B. However, developers quickly realized that these same services could be used to connect individuals with each other and with advertisers. Recent phenomenons such as the summer of Pokémon GO \cite{zsila_empirical_2018} and social media location filters \cite{lubbers_stories_2018} have demonstrated the success of corporation-driven location-based technologies.
+
+These services are traditionally powered by Global Positioning System (GPS) technology. While GPS technology works well outdoors, it is less precise indoors. Current location technology has difficulty accurately placing users as they wander through large buildings like shopping malls, especially if the building has multiple levels. Another option is to use nearby signals such as Wi-Fi, Bluetooth, beacons, etc. Wi-Fi in particular is a strong contender for measurement due to its near-ubiquity in public indoor areas. Many establishments such as coffee shops and restaurants allow consumers to connect to a public Wi-Fi access point for convenience; others, such as administrative offices, use Wi-Fi for internal access. This technology may be of interest to companies who can leverage it for advertising purposes \cite{bues_how_2017}.
+
+This project is an attempted solution to the Kaggle problem "Indoor Location \& Navigation" \cite{kaggle_indoor}. The goal of the project is to detect location with some accuracy in large indoor facilities such as shopping malls or marketplaces using indoor signals. The company, XYZ10, in partnership with Microsoft Research, wants to use this method for a variety of reasons, including location-based marketing offers and autonomous devices. We attempt to solve this problem using a Long Short-Term Memory (LSTM) neural network and looking only at strong Wi-Fi signals from the data. We discuss our proposed approach and the status of our work.
+
+\section{Related Work}
+
+Recurrent neural networks (RNNs) were first proposed as "dynamic error propagation networks" in 1987, just a year after backpropagation made multi-layer neural networks feasible \cite{robinson_utility_1987}. The authors proposed maintaining a local state for each member of the network in addition to the input in order to analyze the output of previous inputs alongside new inputs. This facilitated solutions for more advanced problems for neural networks, such as speech processing.
+
+The problem with traditional RNNs is the problem of all multi-layer neural networks: vanishing and exploding gradients. Using backpropagation repeatedly with no regularization or error control exponentially shifts values away from the usable spectrum, defeating the purpose of learning. To solve this problem, Hochreiter and Schmidhuber introduced LSTM models \cite{hochreiter_long_1997}. These networks are composed of individual units called cells which filter irrelevant inputs at both the input and output cells. Like RNNs, each unit of an LSTM model has the concept of both external input and internal state input; however, LSTM models additionally introduce the idea of both internal state and memory inputs calculated by different portions of the neurons in each layer of the network. \cite{rivas_deep_2020}. LSTM models also introduce additional hyperparameters for tuning these inputs. While additional variants such as bidirectional LSTM models have been introduced, we use a mainline LSTM model for this paper.
+
+LSTM models are a popular solution for indoor location detection using Wi-Fi signals \cite{elbes_indoor_2019, chen_wifi_2020, hussain_indoor_2019}. This is likely because location data is highly temporally and spatially correlated, making it feasible for sequential analysis using recurrent networks. We hope to replicate or even exceed the success of these works on the XYZ10 data by fine-tuning the LSTM using regularization techniques. While other machine learning techniques have been tried for this problem, including k-means clustering \cite{pasricha_learnloc_2015, salamah_enhanced_2016, jedari_wi-fi_2015}, regression \cite{pasricha_learnloc_2015}, support vector machines \cite{salamah_enhanced_2016}, and random forest classifiers \cite{jedari_wi-fi_2015}, we believe we can achieve better results using networks which are specifically suited for sequential analysis.
+
+\section{Methodology}
+
+The original data for the project consists of two parts: sensor readings and locations. The sensors used include Bluetooth, Wi-Fi, and other indoor sensors. The locations are series of (x,y) points. The data is organized by building floors, and each file corresponds to a path walked on a single floor. All data comes from building sensors from hundreds of buildings in China. For this project, we will use a preprocessed version of the data which eliminates all readings other than Wi-Fi readings with a strong signal (BSSID > 1000)  \cite{anzelmo_indoor}.
+
+To begin, we will need to do some preprocessing of the data in order to feed it to the LSTM model. Currently, the data consists of timestamped Wi-Fi signal measurements with an occasional location "waypoint" reading. We will first attach each Wi-Fi reading to the temporally closest waypoint. Since a waypoint may have a variable number of measurements attached to it, we will take the average number of measurements per waypoint and divide the measurements among copies of the waypoint value for any waypoint with more than that number of measurements. This ensures that the data matrix X has a static number of columns.
+
+We will then feed the data to an LSTM model with an embedding layer to convert the data into a processable format. The output will have two dimensions: an x-coordinate and a y-coordinate which corresponds to the nearest waypoint. The number of neurons required for each layer will depend on the number of features present in the data. We will implement the model using the Keras API, backed by TensorFlow.
+
+To train the model, we will run cross-validation using an 80/20 split of training \& validation data. The data has already been partitioned into training and test sets, so we simply need to partition the training data as well.
+
+\bibliographystyle{ieeetr}
+\bibliography{final.bib}
+
+\end{document}
