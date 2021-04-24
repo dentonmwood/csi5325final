@@ -5,9 +5,6 @@
 venv/
 **/__pycache__/
 
-# Program output
-output/
-
 # LaTeX output
 tex/*.aux
 tex/*.log
@@ -18,3 +15,7 @@ tex/*.blg
 
 # Data files
 data/
+
+# Working directories
+tmp/
+output/

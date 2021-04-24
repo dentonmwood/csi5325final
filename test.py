@@ -1,9 +1,9 @@
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import LSTM, Embedding, BatchNormalization
-from tensorflow.keras.layers import Dense, Activation, Input, Dropout
+from tensorflow.keras.layers import Dense, Input, Dropout
 from keras.datasets import imdb
 from keras.preprocessing import sequence
-import numpy as np
+from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
 seqnc_lngth =  128
 embddng_dim = 64
@@ -35,3 +35,27 @@ lstm = Model(inpt_vec, output)
 
 lstm.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 lstm.summary()
+
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3,
+                              min_delta=1e-4, mode='min', verbose=1)
+
+stop_alg = EarlyStopping(monitor='val_loss', patience=7,
+                         restore_best_weights=True, verbose=1)
+
+hist = lstm.fit(x_train, y_train, batch_size=100, epochs=1000,
+                   callbacks=[stop_alg, reduce_lr], shuffle=True,
+                   validation_data=(x_test, y_test))
+
+lstm.save_weights("lstm.hdf5")
+
+import matplotlib.pyplot as plt
+
+fig = plt.figure(figsize=(10,6))
+plt.plot(hist.history['loss'], color='#785ef0')
+plt.plot(hist.history['val_loss'], color='#dc267f')
+plt.title('Model Loss Progress')
+plt.ylabel('Binary Cross-Entropy Loss')
+plt.xlabel('Epoch')
+plt.legend(['Training Set', 'Test Set'], loc='upper right')
+plt.savefig('ch.13.lstm.imdb.loss.png', dpi=350, bbox_inches='tight')
+plt.show()
