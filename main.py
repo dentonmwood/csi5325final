@@ -4,7 +4,7 @@ import os
 from sklearn.model_selection import KFold
 from keras.models import Model, Sequential
 from keras.layers import Input, Dense
-from keras.layers import LSTM, BatchNormalization, Dropout
+from keras.layers import LSTM, BatchNormalization, Dropout, Activation
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping
 import matplotlib.pyplot as plt
 
@@ -65,7 +65,7 @@ def main():
 
     # Build the model
     print('Building model...')
-    lstm = build_model(len(x[0]), len(x[0][0]))
+    lstm = build_lstm_model(len(x[0]), len(x[0][0]))
     print(lstm.summary())
 
     # Cross-validation (taken from Rivas CSI 5325 H5)
@@ -79,14 +79,14 @@ def main():
         i += 1
 
 
-def train_model(lstm, x_train, x_val, y_train, y_val):
+def train_model(model, x_train, x_val, y_train, y_val):
     """Trains the given LSTM model on the given data
 
     Trains the LSTM on the given data for a number of
     epochs. Returns the results for further analysis.
 
     Args:
-        lstm (Model): the compiled LSTM model
+        model (Model): the compiled LSTM model
         x_train (ndarray): the data matrix of the training data
         x_val (ndarray): the data matrix of the validation data
         y_train (ndarray): the target vector of the training data
@@ -102,12 +102,12 @@ def train_model(lstm, x_train, x_val, y_train, y_val):
     stop_alg = EarlyStopping(monitor='val_loss', patience=8,
                              restore_best_weights=True, verbose=1)
 
-    return lstm.fit(x_train, y_train, batch_size=1, epochs=5,
+    return model.fit(x_train, y_train, batch_size=1, epochs=5,
                     shuffle=True, callbacks=[stop_alg, reduce_lr],
                     validation_data=(x_val, y_val))
 
 
-def build_model(sequence_length, num_unique_values):
+def build_lstm_model(sequence_length, num_unique_values):
     """Constructs the LSTM
 
     Constructs and compiles an LSTM model using the Keras API.
@@ -123,9 +123,11 @@ def build_model(sequence_length, num_unique_values):
 
     lstm = Sequential()
     lstm.add(Input(shape=(sequence_length, num_unique_values)))
-    lstm.add(LSTM(256))
-    lstm.add(Dropout(0.1))
+    lstm.add(LSTM(500))
     lstm.add(BatchNormalization())
+    lstm.add(Dropout(0.1))
+    # lstm.add(Dense(256, activation='relu'))
+    # lstm.add(Activation('relu'))
     lstm.add(Dense(3, activation='sigmoid'))
 
     lstm.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
