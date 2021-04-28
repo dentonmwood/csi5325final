@@ -7,6 +7,7 @@ from keras.layers import Input, Dense
 from keras.layers import LSTM, BatchNormalization, Dropout, Activation
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping
 import matplotlib.pyplot as plt
+import time
 
 # The data file directory
 _DATA_DIR = "data"
@@ -90,13 +91,13 @@ def main():
     encoder = build_autoencoder_model(len(x_enc[0]))
     encoder.summary()
 
-    # # Autoencoder
-    # print('Beginning Encoder')
-    # cross_validate_model(encoder, 'encoder', x_enc, y, enc=True)
-
     # LSTM
     print('Beginning LSTM')
     cross_validate_model(lstm, 'lstm', x, y)
+
+    # Autoencoder
+    print('Beginning Encoder')
+    cross_validate_model(encoder, 'encoder', x_enc, y, enc=True)
 
 
 def cross_validate_model(model, filename, x, y, enc=False):
@@ -134,7 +135,7 @@ def cross_validate_model(model, filename, x, y, enc=False):
         print(f'Accuracy: {accuracy[i]}')
         graph_results(results, f'{_OUTPUT_DIR}/{filename}-{i}.pdf')
         i += 1
-    calculate_results(loss, val_loss, accuracy, f'{_OUTPUT_DIR}/{filename}-results.txt')
+    calculate_results(loss, val_loss, accuracy, f'{_OUTPUT_DIR}/{filename}-results-{int(time.time())}.txt')
 
 
 def train_model(model, x_train, x_val, y_train, y_val, enc=False):
@@ -160,7 +161,7 @@ def train_model(model, x_train, x_val, y_train, y_val, enc=False):
     stop_alg = EarlyStopping(monitor='val_loss', patience=8,
                              restore_best_weights=True, verbose=1)
 
-    return model.fit(x_train, x_train if enc else y_train, batch_size=1, epochs=1000 if enc else 1,
+    return model.fit(x_train, x_train if enc else y_train, batch_size=1, epochs=1000,
                      shuffle=True, callbacks=[stop_alg, reduce_lr],
                      validation_data=(x_val, x_val if enc else y_val))
 
@@ -276,15 +277,24 @@ def calculate_results(loss, val_loss, accuracy, filename):
         print(f'Accuracy Bias: {np.mean(accuracy)}')
         print(f'Accuracy Variance: {np.std(accuracy)}')
 
-        outfile.write('Loss: ' + loss)
-        outfile.write(f'Loss Bias: {np.mean(loss)}')
-        outfile.write(f'Loss Variance: {np.std(loss)}')
-        outfile.write('Validation Loss: ' + val_loss)
-        outfile.write(f'Validation Loss Bias: {np.mean(val_loss)}')
-        outfile.write(f'Validation Loss Variance: {np.std(val_loss)}')
-        outfile.write('Accuracy: ' + accuracy)
-        outfile.write(f'Accuracy Bias: {np.mean(accuracy)}')
-        outfile.write(f'Accuracy Variance: {np.std(accuracy)}')
+        outfile.write('Loss: ')
+        for i in loss:
+            outfile.write(f'{i} ')
+        outfile.write('\n')
+        outfile.write(f'Loss Bias: {np.mean(loss)}\n')
+        outfile.write(f'Loss Variance: {np.std(loss)}\n')
+        outfile.write('Validation Loss: ')
+        for i in val_loss:
+            outfile.write(f'{i} ')
+        outfile.write('\n')
+        outfile.write(f'Validation Loss Bias: {np.mean(val_loss)}\n')
+        outfile.write(f'Validation Loss Variance: {np.std(val_loss)}\n')
+        outfile.write('Accuracy: ')
+        for i in accuracy:
+            outfile.write(f'{i} ')
+        outfile.write('\n')
+        outfile.write(f'Accuracy Bias: {np.mean(accuracy)}\n')
+        outfile.write(f'Accuracy Variance: {np.std(accuracy)}\n')
 
 
 if __name__ == '__main__':
